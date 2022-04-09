@@ -1,5 +1,6 @@
 exports.gateway = (p) => `<html>
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <title>${p.title}</title>
   </head>
   <body>
