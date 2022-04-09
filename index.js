@@ -38,7 +38,7 @@ function generateToken() {
 const server = http.createServer((req, res) => {
   req.id = generateToken();
   logger(req, res, () => {
-    const cookies = cookie.parse(req.headers.cookie);
+    const cookies = cookie.parse(req.headers.cookie || '');
     if (cookies[TOKEN_KEY] in tokens) {
       const request = http.request({
         host: targetHost,
