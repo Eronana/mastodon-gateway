@@ -39,17 +39,22 @@ function verify(req) {
   const cookies = cookie.parse(req.headers.cookie || '');
   return cookies[TOKEN_KEY] in tokens;
 }
+
+function sendRequest(req, cb) {
+  return http.request({
+    host: targetHost,
+    port: targetPort,
+    path: req.url,
+    method: req.method,
+    headers: req.headers,
+  }, cb);
+}
+
 const server = http.createServer((req, res) => {
   req.id = generateToken();
   logger(req, res, () => {
     if (req.url.startsWith('/manifest.json') || verify(req)) {
-      const request = http.request({
-        host: targetHost,
-        port: targetPort,
-        path: req.url,
-        method: req.method,
-        headers: req.headers,
-      }, (response) => {
+      const request = sendRequest(req, (response) => {
         res.writeHead(response.statusCode, response.headers);
         response.pipe(res);
       });
@@ -109,11 +114,17 @@ const server = http.createServer((req, res) => {
 });
 
 server.on('upgrade', function (req, socket, head) {
-  if (verify(req)) {
-    proxy.ws(req, socket, head);
-  } else {
-    socket.end();
+  if (!verify(req)) {
+    return socket.end();
   }
+  const request = sendRequest(req);
+  request.on('upgrade', (res, proxySocket, proxyHead) => {
+    if (head && head.length) {
+      socket.unshift(proxyHead);
+    }
+    socket.write(createHttpHeader('HTTP/1.1 101 Switching Protocols', res.headers));
+    proxySocket.pipe(socket).pipe(proxySocket);
+  });
 });
 
 server.listen(port);
