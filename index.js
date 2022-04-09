@@ -35,11 +35,14 @@ function generateToken() {
   return Math.floor(0x1000000000000 + Math.random() * 0x9000000000000).toString(16);
 }
 
+function verify(req) {
+  const cookies = cookie.parse(req.headers.cookie || '');
+  return cookies[TOKEN_KEY] in tokens;
+}
 const server = http.createServer((req, res) => {
   req.id = generateToken();
   logger(req, res, () => {
-    const cookies = cookie.parse(req.headers.cookie || '');
-    if (cookies[TOKEN_KEY] in tokens) {
+    if (req.url.startsWith('/manifest.json') || verify(req)) {
       const request = http.request({
         host: targetHost,
         port: targetPort,
@@ -57,7 +60,7 @@ const server = http.createServer((req, res) => {
     if (g) {
       const token = g[1];
       const headers = {
-        'Location': '/',
+        'Location': req.url,
       };
       if (token in tokens) {
         headers['Set-Cookie'] = `security_token=${token}`;
@@ -103,6 +106,14 @@ const server = http.createServer((req, res) => {
     }
     res.end(template.gateway({ title }));
   });
+});
+
+server.on('upgrade', function (req, socket, head) {
+  if (verify(req)) {
+    proxy.ws(req, socket, head);
+  } else {
+    socket.end();
+  }
 });
 
 server.listen(port);
