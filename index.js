@@ -74,6 +74,7 @@ const server = http.createServer((req, res) => {
           const to = decodeURIComponent(g[1]);
           const token = generateToken() + generateToken() + generateToken() + generateToken();
           const text = template.email({
+            token,
             link: `${req.headers.origin}/set-token?token=${token}`,
           });
           console.log(to);

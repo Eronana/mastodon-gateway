@@ -10,7 +10,14 @@ exports.gateway = (p) => `<html>
     email: <input name="email"/>
     <input type="submit"/>
   </form>
+  </hr>
+  <form action="/set-token">
+    token: <input name="token"/>
+    <input type="submit"/>
+  </form>
 </html>
 `;
 
-exports.email = (p) => `verify link: ${p.link}`;
+exports.email = (p) => `verify link: ${p.link}
+token: ${p.token}
+`;
