@@ -113,16 +113,27 @@ const server = http.createServer((req, res) => {
   });
 });
 
+function writeWSHead(socket, headers) {
+  socket.write('HTTP/1.1 101 Switching Protocols\r\n');
+  for (let i = 0; i < headers.length; i += 2) {
+    socket.write(`${headers[i]}: ${headers[i + 1]}\r\n`);
+  }
+  socket.write('\r\n');
+}
+
 server.on('upgrade', function (req, socket, head) {
   if (!verify(req)) {
     return socket.end();
   }
+  if (head && head.length) {
+    socket.unshift(head);
+  }
   const request = sendRequest(req);
   request.on('upgrade', (res, proxySocket, proxyHead) => {
-    if (head && head.length) {
-      socket.unshift(proxyHead);
+    if (proxyHead && proxyHead.length) {
+      proxySocket.unshift(proxyHead);
     }
-    socket.write(createHttpHeader('HTTP/1.1 101 Switching Protocols', res.headers));
+    writeWSHead(socket, res.rawHeaders);
     proxySocket.pipe(socket).pipe(proxySocket);
   });
 });
