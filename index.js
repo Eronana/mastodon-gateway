@@ -24,7 +24,7 @@ const TOKENS_JSON = './tokens.json';
 morgan.token('id', (req) => req.id);
 const logger = morgan('":id" :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms')
 
-const tokens = new Set(fs.existsSync(TOKENS_JSON) ? require(TOKENS_JSON) : {});
+const tokens = fs.existsSync(TOKENS_JSON) ? require(TOKENS_JSON) : {};
 function addToken(token, email) {
   tokens[token] = email
   fs.writeFileSync(TOKENS_JSON, JSON.stringify(tokens));
