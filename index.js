@@ -136,6 +136,7 @@ server.on('upgrade', function (req, socket, head) {
     writeWSHead(socket, res.rawHeaders);
     proxySocket.pipe(socket).pipe(proxySocket);
   });
+  request.end();
 });
 
 server.listen(port);
